@@ -82,6 +82,58 @@ Produksi ditolak apabila resep belum dibuat, ada bahan resep yang nonaktif, atau
 
 Penjelasan tabel, kolom, relasi ERD, aturan trigger, dan catatan keamanan database tersedia di [docs/skema-database.md](docs/skema-database.md).
 
+### Schema Visualizer
+
+Diagram berikut menunjukkan relasi utama antar tabel. README ini menggunakan Mermaid ER diagram sehingga visualisasi tampil pada viewer Markdown yang mendukung Mermaid.
+
+```mermaid
+erDiagram
+    BAHAN_BAKU ||--o{ DETAIL_PRODUKSI : "digunakan dalam resep"
+    BARANG_JADI ||--o{ DETAIL_PRODUKSI : "memiliki komposisi"
+    BAHAN_BAKU ||--o{ TRANSAKSI : "transaksi bahan"
+    BARANG_JADI ||--o{ TRANSAKSI : "transaksi barang"
+
+    BAHAN_BAKU {
+        BIGINT id_bahan PK
+        VARCHAR kode_bahan UK
+        VARCHAR nama_bahan
+        NUMERIC stok
+        NUMERIC stok_minimum
+    }
+
+    BARANG_JADI {
+        BIGINT id_barang PK
+        VARCHAR kode_barang UK
+        VARCHAR nama_barang
+        NUMERIC harga_jual
+        INTEGER stok
+    }
+
+    DETAIL_PRODUKSI {
+        BIGINT id_detail PK
+        BIGINT id_barang FK
+        BIGINT id_bahan FK
+        NUMERIC jumlah_digunakan
+    }
+
+    TRANSAKSI {
+        BIGINT id_transaksi PK
+        VARCHAR jenis_transaksi
+        BIGINT id_bahan FK
+        BIGINT id_barang FK
+        NUMERIC jumlah
+    }
+```
+
+#### Penjelasan ERD
+
+- `BAHAN_BAKU` dan `BARANG_JADI` adalah tabel master untuk menyimpan data bahan serta produk butik.
+- `DETAIL_PRODUKSI` adalah tabel penghubung resep. Satu barang jadi dapat memiliki banyak bahan, dan satu bahan dapat dipakai pada banyak barang jadi. Kolom `jumlah_digunakan` menyimpan kebutuhan bahan untuk membuat satu unit produk.
+- `TRANSAKSI` menyimpan riwayat perubahan stok. Transaksi `MASUK` dan `BAHAN_KELUAR` terkait ke satu bahan baku; `PRODUKSI` dan `KELUAR` terkait ke satu barang jadi. Setiap transaksi hanya boleh memiliki satu target sesuai jenisnya.
+- Pada notasi Mermaid, `||` berarti tepat satu dan `o{` berarti nol atau banyak. Jadi, satu bahan/produk dapat belum memiliki atau dapat memiliki banyak baris resep maupun transaksi; setiap baris resep tetap merujuk ke tepat satu bahan dan satu barang jadi.
+
+Penjelasan lengkap setiap kolom, constraint, perilaku trigger, dan kebijakan akses tersedia di [dokumentasi skema database](docs/skema-database.md).
+
 ## Catatan
 
 - Trigger pemrosesan stok berjalan saat transaksi baru dimasukkan. Mengubah atau menghapus transaksi secara langsung tidak otomatis membalikkan atau menghitung ulang stok.
